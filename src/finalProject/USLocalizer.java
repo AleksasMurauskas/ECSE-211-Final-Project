@@ -11,9 +11,9 @@ public class USLocalizer {
 	/**
 	 * constants for our car and for the noise margin
 	 */
-	public static int ROTATION_SPEED = 100;
-	private static final double NOISE_MARGIN_D = 35.00;
-	private static final double NOISE_MARGIN_K = 2;
+	public static int ROTATION_SPEED = 180;
+	private static final double NOISE_MARGIN_D = 27.00;
+	private static final double NOISE_MARGIN_K = 5;
 	private int SC;
 	
 	/**
@@ -86,11 +86,12 @@ public class USLocalizer {
 			leftMotor.backward();
 			rightMotor.forward();
 		}
+		carStop();
 		Sound.buzz();
 		
 		// record the first falling angle	
 		angleAlpha = odometer.getXYT()[2];
-
+		System.out.println(angleAlpha);
 		// rotate clock-wisely
 		while (getWallDistace() < NOISE_MARGIN_D + NOISE_MARGIN_K) {
 			leftMotor.forward();
@@ -102,14 +103,12 @@ public class USLocalizer {
 			leftMotor.forward();
 			rightMotor.backward();
 		}
+		carStop();
 		Sound.buzz();
 		
 		//record the second falling angle
 		angleBeta = odometer.getXYT()[2];
-
-		//stop rotating
-		leftMotor.stop(true);
-		rightMotor.stop();
+		System.out.println(angleAlpha);
 
 		// calculate angle of rotation
 		// this calculation is from the tutorial
@@ -119,6 +118,7 @@ public class USLocalizer {
 			deltaTheta = 225 - (angleAlpha + angleBeta) / 2;
 		}
 		turningAngle = deltaTheta + odometer.getXYT()[2];
+		System.out.println(turningAngle);
 
 		// rotate robot to the theta = 0.0 and we account for small error
 		leftMotor.rotate(-convertAngle(Final.WHEEL_RAD,Final.TRACK, turningAngle), true);
@@ -163,5 +163,12 @@ public class USLocalizer {
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
+	/**
+	  * make the car stop
+	  */
+	  private void carStop() {
+		    leftMotor.stop(true);
+		    rightMotor.stop();
+		  }
 
 }

@@ -15,9 +15,9 @@ public class LightLocalizer {
 	/**
 	 * constants for our car
 	 */
-	private static final int ROTATION_SPEED = 100;
-	private static final double SENSOR_DISTANCE = 9.0;
+	private static final int ROTATION_SPEED = 180;
 	private static double distanceLS = 11.4; //distance between the light sensor and the center of rotation: change in function of robot
+	public static final double tileSize = 30.48;
 	/**
 	 * constants will be used in calculation
 	 */
@@ -114,6 +114,7 @@ public class LightLocalizer {
 			          y2 = angle;
 			        }
 				Sound.beep();
+				index++;
 			}
 		}
 		
@@ -128,23 +129,89 @@ public class LightLocalizer {
 		deltaX = Math.cos(thetaX)*distanceLS;
 		deltaY = Math.cos(thetaY)*distanceLS;
 		deltaTheta=odometer.getXYT()[2];
-		/*if (this.SC == 0) {	  
-	      odo.setX(tileSize-deltaX+1);
-	      odo.setY(tileSize-deltaY);
+		if (this.SC == 0) {	  
+	      odometer.setX(tileSize-deltaX);
+	      odometer.setY(tileSize-deltaY);
 		}else if (this.SC == 1) {
-		  odo.setX(7*tileSize + deltaX);
-		  odo.setY(tileSize-deltaX);
+		  odometer.setX(7*tileSize + deltaX);
+		  odometer.setY(tileSize-deltaX);
 		}else if (this.SC == 2) {
-		  odo.setX(7*tileSize + deltax);
-		  odo.setY(7*tileSize + deltay);
+		  odometer.setX(7*tileSize + deltaX);
+		  odometer.setY(7*tileSize + deltaY);
 		}else {
-		  odo.setY(7*tileSize + deltay);
-		  odo.setX(tileSize - deltax);
-		}*/
+		  odometer.setY(7*tileSize + deltaY);
+		  odometer.setX(tileSize - deltaX);
+		}
 		
 		
 		// set the calculated position
-		odometer.setXYT(deltaX,deltaY,deltaTheta);
+		//odometer.setXYT(deltaX,deltaY,deltaTheta);
+
+	}
+	public void localize(int x,int y) {
+		double x1 = 0;
+		double x2 = 0;
+		double y1 = 0;
+		double y2 = 0;
+		double angle = 0;
+		//initialize the index of the number of lines being detected
+		int index = 0;
+		leftMotor.setSpeed(ROTATION_SPEED);
+		rightMotor.setSpeed(ROTATION_SPEED);
+		
+		
+		// ensure that we are in the right postion before rotating
+		findPostion();
+
+		
+		// Scan all four lines and record our angle
+		while (index < 4) {	
+			
+			//rotating clock-wisely
+			leftMotor.setSpeed(ROTATION_SPEED);
+			rightMotor.setSpeed(ROTATION_SPEED);
+			leftMotor.forward();
+			rightMotor.backward();
+			
+			//fetch sample continuously
+			sample = fetchSample();
+			if (sample < COLOR_THRESHOLD_A) {
+				angle = odometer.getXYT()[2];
+				//get the theta for positive x axis, negative y axis, negative x axis, and positive y axis
+				 if((angle - 0 < 50) || (360 - angle <50)) {
+			          x1 = angle;
+			        }
+			        else if(Math.abs(angle - 90) < 50) {
+			          y1 = angle;
+			        }
+			        else if (Math.abs(angle-180) < 50) {
+			          x2 = angle;
+			        }
+			        else if (Math.abs(angle-270) < 50) {
+			          y2 = angle;
+			        }
+				Sound.beep();
+				index++;
+			}
+		}
+		
+		//stop when we detect the four line which is the positive y axis
+		leftMotor.stop(true);
+		rightMotor.stop();
+
+		//now calculate the current position by trigonometry
+		double thetaX, thetaY, deltaX, deltaY, deltaTheta;
+		thetaX= Math.toRadians((x2-x1)/2);
+		thetaY=Math.toRadians((y2-y1)/2);;
+		deltaX = Math.cos(thetaX)*distanceLS;
+		deltaY = Math.cos(thetaY)*distanceLS;
+		deltaTheta=odometer.getXYT()[2];
+	      odometer.setX(x*tileSize-deltaX);
+	      odometer.setY(y*tileSize-deltaY);
+		
+		
+		// set the calculated position
+		//odometer.setXYT(deltaX,deltaY,deltaTheta);
 
 	}
 
@@ -173,14 +240,14 @@ public class LightLocalizer {
 		}
 		
 		//stop the motor
-		leftMotor.stop();
+		leftMotor.stop(true);
 		rightMotor.stop();
 
 		// Move forwards so our origin is close to origin
 		LightLocalizer.leftMotor.setSpeed(ROTATION_SPEED);
 		LightLocalizer.rightMotor.setSpeed(ROTATION_SPEED);
-		leftMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 1), true);
-		rightMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 1), false);
+		leftMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 4), true);
+		rightMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 4), false);
 
 
 	}

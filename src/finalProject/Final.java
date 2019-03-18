@@ -1,5 +1,9 @@
 package finalProject;
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Map;
+
+import org.json.simple.parser.ParseException;
 
 import ca.mcgill.ecse211.WiFiClient.WifiConnection;
 import finalProject.Odometer;
@@ -12,18 +16,18 @@ import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.SampleProvider;
 public class Final {
 	 //colorDetector sensor related objects
-	 static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S2"));
+	 //static EV3ColorSensor colorSensor = new EV3ColorSensor(LocalEV3.get().getPort("S3"));
 	   
 	  // Ultrasonic sensor related objects
 	 private static SampleProvider sampleProviderUS;
 	 static EV3UltrasonicSensor usSensor;
 	 static float[] usValues;
-	 private static final String SERVER_IP = "192.168.2.26";
+	 private static final String SERVER_IP = "192.168.2.12";
 	 private static final int TEAM_NUMBER = 12;
 	 public static Odometer odometer;
-	 private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
-	 private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("C"));
-	 private static final Port usPort = LocalEV3.get().getPort("S1"); //port for the Ultrasonic Sensor
+	 private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+	 private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("B"));
+	 private static final Port usPort = LocalEV3.get().getPort("S4"); //port for the Ultrasonic Sensor
 	 private static final TextLCD lcd = LocalEV3.get().getTextLCD();
 	 public static final double WHEEL_RAD = 2.10;
 	 public static final double TRACK = 13.42 ;
@@ -33,7 +37,7 @@ public class Final {
 	 private static final boolean ENABLE_DEBUG_WIFI_PRINT = true;
 
 	  @SuppressWarnings("rawtypes")
-	 public static void main(String[] args) throws OdometerExceptions {
+	 public static void main(String[] args) throws OdometerExceptions, UnknownHostException, IOException, ParseException {
 		  
 		  LightLocalizer ll;
 		  USLocalizer usLocal;
@@ -43,7 +47,7 @@ public class Final {
 
 	     // Initialize WifiConnection class
 	     WifiConnection conn = new WifiConnection(SERVER_IP, TEAM_NUMBER, ENABLE_DEBUG_WIFI_PRINT);
-	     try {
+	    // try {
 	         /*
 	          * getData() will connect to the server and wait until the user/TA presses the "Start" button
 	          * in the GUI on their laptop with the data filled in. Once it's waiting, you can kill it by
@@ -56,9 +60,8 @@ public class Final {
 	          * an exception letting you know.
 	          */
 	         Map data = conn.getData();
-	         System.out.println("Map:\n" + data);
-
 	         int redTeam = ((Long) data.get("RedTeam")).intValue();
+	         int greenTeam = ((Long)data.get("GreenTeam")).intValue();
 	         int redCorner = ((Long) data.get("RedCorner")).intValue();
 	         usSensor = new EV3UltrasonicSensor(usPort);
 	         sampleProviderUS = usSensor.getMode("Distance");
@@ -81,14 +84,16 @@ public class Final {
 	         int island_ll_y = ((Long)data.get("Island_LL_y")).intValue();
 	         int island_ur_x = ((Long)data.get("Island_UR_x")).intValue();
 	         int island_ur_y = ((Long)data.get("Island_UR_y")).intValue();
-	         navi = new Navigation(leftMotor,rightMotor,1,szr_ur_x,szr_ll_x,szr_ur_y,szr_ll_y,tnr_ur_x,tnr_ll_x,tnr_ur_y,tnr_ll_y,red_ur_x,red_ll_x,red_ur_y,red_ll_y,island_ur_x,island_ll_x,island_ur_y,island_ll_y,sampleProviderUS, usValues,ll);
+	         navi = new Navigation(leftMotor,rightMotor,greenTeam - 1,szr_ur_x,szr_ll_x,szr_ur_y,szr_ll_y,tnr_ur_x,tnr_ll_x,tnr_ur_y,tnr_ll_y,red_ur_x,red_ll_x,red_ur_y,red_ll_y,island_ur_x,island_ll_x,island_ur_y,island_ll_y,sampleProviderUS, usValues,ll);
+	         Thread odoThread = new Thread(odometer);
+	 		 odoThread.start();
 	         usLocal.localize();
+	         navi.gySensor.reset();
 	         ll.localize();
 	         navi.work();
-	       } catch (Exception e) {
-	         System.err.println("Error: " + e.getMessage());
-	       }
-
+	      // } catch (Exception e) {
+	        // System.err.println("Error: " + e.getMessage());
+	       //}
 	 }
 
 }

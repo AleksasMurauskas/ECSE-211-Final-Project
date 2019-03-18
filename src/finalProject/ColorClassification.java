@@ -11,7 +11,7 @@ public class ColorClassification {
 	 * setup the motor for the sensor
 	 */
 	private static final EV3LargeRegulatedMotor sideMotor = 
-			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
 	
 	/**
 	 * Light sensor object
@@ -38,7 +38,7 @@ public class ColorClassification {
 	/**
 	 * 2D Float Array store the information in one list for iteration
 	 */
-	private static final float[][] COLOR_LIST= {RED,GREEN,BLUE,YELLOW};
+	private static final float[][] COLOR_LIST= {BLUE,GREEN,YELLOW,RED};
 	
 	/**
 	 *  tolerance interval for classifying a color
