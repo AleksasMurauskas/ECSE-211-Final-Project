@@ -13,7 +13,7 @@ import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
 
 public class Navigation {
-	 private static final int FORWARD_SPEED = 180;
+	  private static final int FORWARD_SPEED = 180;
 	  public static final String[] colors = {"blue","green","yellow","red"};
 	  private int targetColour;
 	  private int szrLLx;
@@ -53,9 +53,9 @@ public class Navigation {
 	  private LightLocalizer ll;
 	  private boolean planning;
 	  private boolean found;
-	   static double jobx;
-	   static double joby;
-	   public boolean search;
+	  static double jobx;
+	  static double joby;
+	  public boolean search;
 	  private static boolean avoid=false;
 	  private static boolean back = true;
 	  private static boolean justAvoid = false;
@@ -94,9 +94,9 @@ public class Navigation {
 	    this.ll = ll;
 	  }
 	/**
-	 * 
-	 * @param x
-	 * @param y
+	 * the car will navigate to the point (x*tileSize,y*tileSize)
+	 * @param x x coordinate 
+	 * @param y y coordinate
 	 * @throws OdometerExceptions
 	 */
 	  public void travelTo(double x,double y ) throws OdometerExceptions{
@@ -200,7 +200,7 @@ public class Navigation {
 	  /**
 	   * this method is used to call the color classification and detect the color of the can and avoid the can during the 
 	   * travelling state 
-	   * @param distance
+	   * @param distance the detected distance by us sensor
 	   * @throws OdometerExceptions
 	   */
 	  public  void avoid(double distance) throws OdometerExceptions{
@@ -225,12 +225,8 @@ public class Navigation {
 	  
 
 	  /**
-	   * This method allows the conversion of a distance to the total rotation of each wheel need to
-	   * cover that distance.
-	   * 
-	   * @param radius
-	   * @param distance
-	   * @return
+	   * turning to a certain degree,call by travelTo()
+	   * @param theta target degree
 	   */
 	  public void turnTo (double theta) {
 		  double angle,smallestAngle;
@@ -353,7 +349,7 @@ public class Navigation {
 		}
 	  /**
 	   * the method help the car turn right,and determine whether need to test the color again,called by avoid function
-	   * @param color
+	   *
 	   */
 	  public void RightAvoid() throws OdometerExceptions {
 		  avoid = true;
@@ -372,7 +368,7 @@ public class Navigation {
 		}
 	  /**
 	   * the method help the car turn right,and determine whether need to test the color again,called by avoid function
-	   * @param color
+	   * 
 	   */
 		
 		public void leftAvoid () throws OdometerExceptions {
@@ -582,20 +578,30 @@ public class Navigation {
 		    rightMotor.stop();
 		  }
 	 
-	 
+	 /**
+	  * the car will travel to near the tunnel ,do the localization and go through the tunnel
+	  * @throws OdometerExceptions
+	  */
 	 public void travelTunnel() throws OdometerExceptions {
 		 if (tunLLx + 1 <= redURx) {
+			 travelTo((tunLLx-0.3)*tileSize,(tunLLy-1.3)*tileSize);
+			 ll.localize(tunLLx, tunLLy - 1);
 			 travelTo((tunLLx+0.45)*tileSize,(tunLLy-1)*tileSize);
 			 turnTo(0);
 			// travelTo((tunURx-0.5)*tileSize,(tunURy+1)*tileSize);
 			 goStraightLine((redURy-redLLy+2)*tileSize,120);
 		}else {
+			travelTo((tunLLx-1.3)*tileSize,(tunLLy-0.3)*tileSize);
+		    ll.localize(tunLLx-1, tunLLy);
 			travelTo((tunLLx-1)*tileSize,(tunLLy+0.45)*tileSize);
 			turnTo(90);
 			//travelTo((tunURx + 1)*tileSize,(tunURy - 0.5)*tileSize);
 			 goStraightLine((redURx-redLLx+2)*tileSize,120);
 		}
 	 }
+	 /**
+	  * construct an array which contain a list of points which car will visit and do the research
+	  */
 	 public void constructMap() {
 		 int i = 0;
 		 for (int j = 1;j<= (szrURx - szrLLx) - 1;j += 2) {
@@ -624,6 +630,11 @@ public class Navigation {
 			 }
 		 }
 	 }
+	 /**
+	  * when found a can when rotation, the car will stop and move to in front of the can and do the research
+	  * @param distance the detected distance by us sensor, the distance of can
+	  * @throws OdometerExceptions
+	  */
 	 public void travelSearch(double distance) throws OdometerExceptions {
 		 carStop();
 		 leftMotor.rotate(convertDistance(leftRadius, distance-3), true);
@@ -631,7 +642,10 @@ public class Navigation {
 		 carStop();
 		 int color = colorDetector.findColor();
 		 if (color == this.targetColour) {
+			 makeNoise(10);
 			 travelTo(szrURx * tileSize,szrURy * tileSize);
+			 makeNoise(5);
+			 System.exit(0);
 		 }else {
 			 leftMotor.rotate(-convertDistance(leftRadius, distance-3), true);
 			 rightMotor.rotate(-convertDistance(rightRadius, distance-3), false);
@@ -639,6 +653,11 @@ public class Navigation {
 		 }
 		 
 	 }
+	 /**
+	  * after the car reach the visit point in the search map,
+	  * car will rotate about 360 to see if there is any can near the car
+	  * @throws OdometerExceptions
+	  */
 	 public void turnSearch() throws OdometerExceptions {
 		 this.search = true;
 		 if (usFetch() < 5) {
@@ -674,6 +693,16 @@ public class Navigation {
 			  }
 		 }
 	 }
+	 private void makeNoise(int num) {
+		 for(int i = 0;i< num;i++) {
+			Sound.beep(); 
+		 }
+	 }
+	 /**
+	  * the program will call the constructMap() method to generate the searchMap,
+	  * the car will visit the point on the map one by one 
+	  * @throws OdometerExceptions
+	  */
 	 public void search() throws OdometerExceptions {
 		 constructMap();
 		 int dX =  ((szrURx-szrLLx) / 2) + ((szrURx-szrLLx) % 2);
@@ -690,6 +719,21 @@ public class Navigation {
 			 }
 		 }
 	 }
+	 /**
+	  * travel to the left-lower point of search area
+	  * @throws OdometerExceptions
+	  */
+	 public void travelToSearchArea() throws OdometerExceptions {
+		 travelTo((szrLLx-0.4)*tileSize,(szrLLy-0.4)*tileSize);
+		 turnTo(90);
+		 ll.localize(szrLLx, szrLLy);
+		 travelTo(szrLLx*tileSize,szrLLy*tileSize);
+		 makeNoise(5);
+	 }
+	 /**
+	  * this function is the primary function in the navigation class,it calls other function to reach the destination
+	  * @throws OdometerExceptions
+	  */
 	 public void work() throws OdometerExceptions {
 		 travelTo((redLLx+1)*tileSize,(redLLy+1)*tileSize);
 		 turnTo(0);
@@ -699,11 +743,11 @@ public class Navigation {
 	     rightMotor.rotate(convertAngle(rightRadius, track, 6), false);
 	     System.out.println("here");
 		 gySensor.reset();
-	     travelTo((tunLLx-1.3)*tileSize,(tunLLy-0.3)*tileSize);
-	     ll.localize(tunLLx-1, tunLLy);
 		 travelTunnel();
-		// travelTo(szrLLx*tileSize,szrLLy*tileSize);
-		// search();
-		// travelTo(szrURx*tileSize,szrURy*tileSize);
+		 
+		 travelToSearchArea();
+		 search();
+		 travelTo(szrURx*tileSize,szrURy*tileSize);
+		 makeNoise(5);
 	 }
 }

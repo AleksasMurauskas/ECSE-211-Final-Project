@@ -63,7 +63,7 @@ public class ColorClassification {
 	
 	/**
 	 * Constructor
-	 * @param colorSensor
+	 * @param colorSensor the color sensor connect to the car
 	 */
 	public ColorClassification(EV3ColorSensor colorSensor) {
 		this.colorSensor = colorSensor;
@@ -114,8 +114,8 @@ public class ColorClassification {
 	
 	/**
 	 * This method allows to match the readings and determine the color detected
+	 * @param array the detected rgb value
 	 * @return (integer representing color) 0-red 1-green 2-blue 3-yellow
-	 * 
 	 */
 	public static int matchColor(float array[]) {
 		
@@ -154,8 +154,8 @@ public class ColorClassification {
 	
 /**
  * This method allow us to find whether one array is within interval of another
- * @param array1 
- * @param array2 
+ * @param array1  the detected rgb value
+ * @param array2  the standard rgb value of certain can
  * @param tolerace which means the max difference the value in the two arrays can have 
  * @return boolean whether the value in the two arrays are close enough
  */

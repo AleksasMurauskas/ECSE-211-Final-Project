@@ -53,7 +53,8 @@ public class LightLocalizer {
 
 	/**
 	 * Constructor for our light localizer
-	 * @param odometer
+	 * @param SC starting corner
+	 * @param odometer 
 	 * @param leftMotor
 	 * @param rightMotor
 	 */
@@ -148,6 +149,11 @@ public class LightLocalizer {
 		//odometer.setXYT(deltaX,deltaY,deltaTheta);
 
 	}
+	/**
+	 * the overload method of localize() which will let the car do the localization near the target point
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 */
 	public void localize(int x,int y) {
 		double x1 = 0;
 		double x2 = 0;
@@ -206,8 +212,8 @@ public class LightLocalizer {
 		deltaX = Math.cos(thetaX)*distanceLS;
 		deltaY = Math.cos(thetaY)*distanceLS;
 		deltaTheta=odometer.getXYT()[2];
-	      odometer.setX(x*tileSize-deltaX);
-	      odometer.setY(y*tileSize-deltaY);
+	    odometer.setX(x*tileSize-deltaX);
+	    odometer.setY(y*tileSize-deltaY);
 		
 		
 		// set the calculated position

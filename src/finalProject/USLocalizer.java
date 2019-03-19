@@ -38,12 +38,11 @@ public class USLocalizer {
 
 	/**
 	 * Constructor to initialize variables
-	 * 
-	 * @param Odometer
-	 * @param EV3LargeRegulatedMotor for left motor
-	 * @param EV3LargeRegulatedMotor for right motor
-	 * @param boolean localize with/without rising
-	 * @param SampleProvider for detection of distance
+	 * @param SC starting corner
+	 * @param odo Odometer
+	 * @param leftMotor EV3LargeRegulatedMotor for left motor
+	 * @param rightMotor EV3LargeRegulatedMotor for right motor
+	 * @param usDistance SampleProvider for detection of distance
 	 */
 	public USLocalizer(Odometer odo, EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,SampleProvider usDistance,int SC) {
 		this.odometer = odo;
