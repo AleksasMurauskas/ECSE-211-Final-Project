@@ -922,6 +922,7 @@ public class Navigation {
 				turnTo(180);
 			}
 		 }
+		 return timeMeasure();
 	 }
 	 private boolean timeMeasure() {
 		 while(ll.fetchSample() > COLOR_THRESHOLD_B) {
