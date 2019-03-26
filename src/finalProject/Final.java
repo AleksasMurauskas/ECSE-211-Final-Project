@@ -26,7 +26,7 @@ public class Final {
 	 /**
 	  * the parameter used in wifi connection
 	  */
-	 private static final String SERVER_IP = "192.168.2.12";
+	 private static final String SERVER_IP = "192.168.2.6";
 	 private static final int TEAM_NUMBER = 12;
 	 /**
 	  * the parameter used in navigation and odometer
@@ -98,7 +98,7 @@ public class Final {
 	         int island_ll_y = ((Long)data.get("Island_LL_y")).intValue();
 	         int island_ur_x = ((Long)data.get("Island_UR_x")).intValue();
 	         int island_ur_y = ((Long)data.get("Island_UR_y")).intValue();
-	         navi = new Navigation(leftMotor,rightMotor,greenTeam - 1,szr_ur_x,szr_ll_x,szr_ur_y,szr_ll_y,tnr_ur_x,tnr_ll_x,tnr_ur_y,tnr_ll_y,red_ur_x,red_ll_x,red_ur_y,red_ll_y,island_ur_x,island_ll_x,island_ur_y,island_ll_y,sampleProviderUS, usValues,ll);
+	         navi = new Navigation(leftMotor,rightMotor,1,szr_ur_x,szr_ll_x,szr_ur_y,szr_ll_y,tnr_ur_x,tnr_ll_x,tnr_ur_y,tnr_ll_y,red_ur_x,red_ll_x,red_ur_y,red_ll_y,island_ur_x,island_ll_x,island_ur_y,island_ll_y,sampleProviderUS, usValues,ll);
 	         // program start
 	         Thread odoThread = new Thread(odometer);
 	 		 odoThread.start();

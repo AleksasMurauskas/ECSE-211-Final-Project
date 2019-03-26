@@ -15,7 +15,7 @@ public class LightLocalizer {
 	/**
 	 * constants for our car
 	 */
-	private static final int ROTATION_SPEED = 180;
+	private static final int ROTATION_SPEED = 220;
 	private static double distanceLS = 11.4; //distance between the light sensor and the center of rotation: change in function of robot
 	public static final double tileSize = 30.48;
 	/**
@@ -102,16 +102,16 @@ public class LightLocalizer {
 			if (sample < COLOR_THRESHOLD_A) {
 				angle = odometer.getXYT()[2];
 				//get the theta for positive x axis, negative y axis, negative x axis, and positive y axis
-				 if((angle - 0 < 50) || (360 - angle <50)) {
+				 if((angle - 0 < 45) || (360 - angle <45)) {
 			          x1 = angle;
 			        }
-			        else if(Math.abs(angle - 90) < 50) {
+			        else if(Math.abs(angle - 90) < 45) {
 			          y1 = angle;
 			        }
-			        else if (Math.abs(angle-180) < 50) {
+			        else if (Math.abs(angle-180) < 45) {
 			          x2 = angle;
 			        }
-			        else if (Math.abs(angle-270) < 50) {
+			        else if (Math.abs(angle-270) < 45) {
 			          y2 = angle;
 			        }
 				Sound.beep();
@@ -126,9 +126,11 @@ public class LightLocalizer {
 		//now calculate the current position by trigonometry
 		double thetaX, thetaY, deltaX, deltaY, deltaTheta;
 		thetaX= Math.toRadians((x2-x1)/2);
-		thetaY=Math.toRadians((y2-y1)/2);;
+		thetaY= Math.toRadians((y2-y1)/2);
 		deltaX = Math.cos(thetaX)*distanceLS;
+		System.out.println(deltaX);
 		deltaY = Math.cos(thetaY)*distanceLS;
+		System.out.println(deltaY);
 		deltaTheta=odometer.getXYT()[2];
 		if (this.SC == 0) {	  
 	      odometer.setX(tileSize-deltaX);
@@ -290,7 +292,7 @@ public class LightLocalizer {
 	 * This method gets the color value of the light sensor
 	 * @return a float represents the color value
 	 */
-	private float fetchSample() {
+	public float fetchSample() {
 		float[] colorValue = new float[idColour.sampleSize()];
 		idColour.fetchSample(colorValue, 0);
 		return colorValue[0];

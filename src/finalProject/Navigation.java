@@ -13,7 +13,7 @@ import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
 
 public class Navigation {
-	  private static final int FORWARD_SPEED = 180;
+	  private static final int FORWARD_SPEED = 200;
 	  public static final String[] colors = {"blue","green","yellow","red"};
 	  private int targetColour;
 	  private int szrLLx;
@@ -33,6 +33,7 @@ public class Navigation {
 	  private int islURy;
 	  private int redURy;
 	  public boolean obstacle;
+	  public static final int size = 12;
 	  public static final double tileSize = 30.48;
 	  private static final int ROTATE_SPEED = 100;
 	  public static Odometer odometer = Final.odometer;
@@ -56,10 +57,13 @@ public class Navigation {
 	  static double jobx;
 	  static double joby;
 	  public boolean search;
+	  private float[] searchHelper = new float[size];
+	  private int helperCounter = 0;
 	  private static boolean avoid=false;
 	  private static boolean back = true;
 	  private static boolean justAvoid = false;
 	  private int[][] searchMap ; 
+	  private static final double COLOR_THRESHOLD_B = 0.38;
 	public Navigation(EV3LargeRegulatedMotor leftmotor,EV3LargeRegulatedMotor rightmotor,int targetColour,int szrURx,int szrLLx,int szrURy,int szrLLy,int tunURx,int tunLLx,int tunURy,int tunLLy,int redURx,int redLLx,int redURy,int redLLy,int islURx,int islLLx,int islURy,int islLLy,SampleProvider us, float[] usValues,LightLocalizer ll) throws OdometerExceptions {
 		this.szrLLx = szrLLx;
 		this.szrLLy = szrLLy;
@@ -128,11 +132,12 @@ public class Navigation {
 	    //TO DO SEE POSITION TO NEXT POSITION 
 	   // angle = odometer.getXYT()[2];
 	    
-	    dX = x - odometer.getXYT()[0];
-	    dY = y - odometer.getXYT()[1];
+	    dX = (int)(x - odometer.getXYT()[0]);
+	    dY = (int)(y - odometer.getXYT()[1]);
 	    double oldx = odometer.getXYT()[0];
 	    double oldy = odometer.getXYT()[1];
 	    distance = Math.sqrt(dX*dX + dY*dY);
+	    System.out.println(distance);
 	    theta = Math.toDegrees(Math.atan(dX/dY));
 	    
 	    if(dX < 0 && dY < 0) {
@@ -153,18 +158,18 @@ public class Navigation {
 		   rightMotor.setSpeed((int)(FORWARD_SPEED*0.8));
 	    speed = FORWARD_SPEED*0.8;
 	   }else {
-		   if(distance < 12) {
+		   leftMotor.setSpeed(FORWARD_SPEED);
+		   rightMotor.setSpeed(FORWARD_SPEED);
+		   speed = FORWARD_SPEED;
+	   
+	   }
+		   if(distance < 14) {
 		   leftMotor.setSpeed((int) (FORWARD_SPEED * 0.7));
 		   rightMotor.setSpeed((int) (FORWARD_SPEED * 0.7)); 
 		   leftMotor.rotate(convertDistance(leftRadius, distance), true);
 		   rightMotor.rotate(convertDistance(rightRadius, distance), false);
 		   return;
 		   
-	   }else {
-		   leftMotor.setSpeed(FORWARD_SPEED);
-		   rightMotor.setSpeed(FORWARD_SPEED);
-		   speed = FORWARD_SPEED;
-	   }
 	   }
 	   leftMotor.forward();
 	   rightMotor.forward();
@@ -177,6 +182,7 @@ public class Navigation {
 	    	int dx = (int)(odometer.getXYT()[0]-jobx);
 	    	int dy = (int)(odometer.getXYT()[1]-joby);
 	    	distance1 = Math.hypot(dx, dy);
+	    	System.out.println(distance1);
 	    	if(distance1 < 10) {
 	    	   carStop();
 	    	   travelTo(x,y);
@@ -188,7 +194,7 @@ public class Navigation {
 	    	if (losePath(oldx,oldy)) {
 	    		travelTo(jobx,joby);
 	    	}
-	    	if(usFetch() < 13 && distance1 > 10) {
+	    	if(usFetch() < 13 && (distance1 > 20 && !search)) {
 	    		avoid(usFetch());
 	    		travelTo(x,y);
 	    	}
@@ -448,12 +454,12 @@ public class Navigation {
 		    double degree1 = gyroFetch();
 			if(degree1 - degree  >= 2) {
 				leftMotor.setSpeed(speed);
-		        rightMotor.setSpeed((float)(speed+(degree1 - degree)*6));
+		        rightMotor.setSpeed((speed+(int)(degree1 - degree)*6));
 		        leftMotor.forward();
 	  		rightMotor.forward();
 		this.gyAngles.fetchSample(angles, 0);
 	  }else if(degree1 - degree <=-2) {
-	  		leftMotor.setSpeed((float)(speed+(degree - degree1)*6));
+	  		leftMotor.setSpeed((float)(speed+(int)(degree - degree1)*6));
 		        rightMotor.setSpeed(speed);
 		        leftMotor.forward();
 	  		rightMotor.forward();
@@ -467,6 +473,18 @@ public class Navigation {
 	   */
 	  private void goStraightLine(double distance,int speed) {
 		  carStop();
+		  for (EV3LargeRegulatedMotor motor : new EV3LargeRegulatedMotor[] {leftMotor, rightMotor}) {
+		      motor.stop();
+		      motor.setAcceleration(3000);
+		    }
+
+		    // Sleep for 2 seconds
+		    try {
+		    	
+		      Thread.sleep(2000);
+		    } catch (InterruptedException e) {
+		      // There is nothing to be done here
+		    }
 		  double angle = gyroFetch();
 		  double p1 = (leftMotor.getTachoCount()+rightMotor.getTachoCount())*leftRadius*Math.PI/360;
 		  double p2 = (leftMotor.getTachoCount()+rightMotor.getTachoCount())*leftRadius*Math.PI/360;
@@ -550,18 +568,18 @@ public class Navigation {
 		// System.out.println(curx+" "+cury);
 		 boolean x1=false,y1=false;
 		 if (jobx < x && curx < x) {
-			 x1 = (jobx - curx >= 8.5);
+			 x1 = (jobx - curx >= 15);
 		 }else if (jobx > x && curx > x) {
-			 x1 = ((curx - jobx) >= 8.5);
+			 x1 = ((curx - jobx) >= 15);
 		 }else if ((jobx > x && curx < x)||(jobx < x && curx > x)) {
-			 x1 = (Math.abs(curx - x) >= 8.5);
+			 x1 = (Math.abs(curx - x) >= 15);
 		 }
 		 if (joby < y && cury < y) {
-			 y1 = (joby - cury >= 8.5);
+			 y1 = (joby - cury >= 15);
 		 }else if (joby > y && cury > y) {
-			 y1 = ((cury - joby) >= 8.5);
+			 y1 = ((cury - joby) >= 15);
 		 }else if ((joby > y && cury < y)||(joby < y && cury > y)) {
-			 y1 = Math.abs(cury - y) >= 6;
+			 y1 = Math.abs(cury - y) >= 10;
 		 }
 		 if (x1||y1) {
 			 System.out.println(x1);
@@ -583,20 +601,30 @@ public class Navigation {
 	  * @throws OdometerExceptions
 	  */
 	 public void travelTunnel() throws OdometerExceptions {
-		 if (tunLLx + 1 <= redURx) {
-			 travelTo((tunLLx-0.3)*tileSize,(tunLLy-1.3)*tileSize);
+		 if ((tunLLx + 1 <= redURx)||(tunURy-tunLLy == 2)) {
+			 if ((tunLLx + tunLLy) >= 9) {
+					travelTo((tunLLx)*tileSize+2,(tunLLy-1)*tileSize+2);
+				}else {
+			 travelTo((tunLLx)*tileSize-2,(tunLLy-1)*tileSize-2);
+				}
+			 turnTo(0);
 			 ll.localize(tunLLx, tunLLy - 1);
-			 travelTo((tunLLx+0.45)*tileSize,(tunLLy-1)*tileSize);
+			 travelTo((tunLLx+0.55)*tileSize,(tunLLy-1)*tileSize);
 			 turnTo(0);
 			// travelTo((tunURx-0.5)*tileSize,(tunURy+1)*tileSize);
-			 goStraightLine((redURy-redLLy+2)*tileSize,120);
+			 goStraightLine((redURy-redLLy+1)*tileSize,120);
 		}else {
-			travelTo((tunLLx-1.3)*tileSize,(tunLLy-0.3)*tileSize);
+			if ((tunLLx + tunLLy) >= 9) {
+				travelTo((tunLLx-1)*tileSize+2,(tunLLy)*tileSize+2);
+			}else {
+			travelTo((tunLLx-1)*tileSize-2,(tunLLy)*tileSize-2);
+			}
+			turnTo(0);
 		    ll.localize(tunLLx-1, tunLLy);
-			travelTo((tunLLx-1)*tileSize,(tunLLy+0.45)*tileSize);
+			travelTo((tunLLx-1)*tileSize,(tunLLy+0.5)*tileSize);
 			turnTo(90);
 			//travelTo((tunURx + 1)*tileSize,(tunURy - 0.5)*tileSize);
-			 goStraightLine((redURx-redLLx+2)*tileSize,120);
+			 goStraightLine((redURx-redLLx+1)*tileSize,120);
 		}
 	 }
 	 /**
@@ -608,11 +636,13 @@ public class Navigation {
 			 for(int k = 1;k<=(szrURy - szrLLy) - 1;k += 2) {
 				 searchMap[0][i]= szrLLx + j;
 				 searchMap[1][i]= szrLLy + k;
+				 System.out.println(searchMap[0][i]+" "+searchMap[1][i]);
 				 i = i + 1;
 			 }
-			 if ((szrURy - szrLLx) % 2 == 1) {
+			 if ((szrURy - szrLLy) % 2 == 1) {
 				 searchMap[0][i] = szrLLx + j;
 				 searchMap[1][i] = szrURy - 1;
+				 System.out.println(searchMap[0][i]+" "+searchMap[1][i]);
 				 i = i + 1;
 			 }
 			 
@@ -621,11 +651,13 @@ public class Navigation {
 			 for(int k = 1;k<=(szrURy - szrLLy) - 1;k += 2) {
 				 searchMap[0][i]= szrURx - 1;
 				 searchMap[1][i]= szrLLy + k;
+				 System.out.println(searchMap[0][i]+" "+searchMap[1][i]);
 				 i = i + 1;
 			 }
-			 if ((szrURy - szrLLx) % 2 == 1) {
+			 if ((szrURy - szrLLy) % 2 == 1) {
 				 searchMap[0][i] = szrURx - 1;
 				 searchMap[1][i] = szrURy - 1;
+				 System.out.println(searchMap[0][i]+" "+searchMap[1][i]);
 				 i = i + 1;
 			 }
 		 }
@@ -637,8 +669,13 @@ public class Navigation {
 	  */
 	 public void travelSearch(double distance) throws OdometerExceptions {
 		 carStop();
-		 leftMotor.rotate(convertDistance(leftRadius, distance-3), true);
-		 rightMotor.rotate(convertDistance(rightRadius, distance-3), false);
+		 //leftMotor.rotate(convertDistance(leftRadius, distance-3), true);
+		 //rightMotor.rotate(convertDistance(rightRadius, distance-3), false);
+		 if (distance > 20) {
+		 goStraightLine(distance - 5,70);
+		 }else {
+			 normalGoForward(distance - 5);	 
+		 }
 		 carStop();
 		 int color = colorDetector.findColor();
 		 if (color == this.targetColour) {
@@ -647,9 +684,10 @@ public class Navigation {
 			 makeNoise(5);
 			 System.exit(0);
 		 }else {
-			 leftMotor.rotate(-convertDistance(leftRadius, distance-3), true);
-			 rightMotor.rotate(-convertDistance(rightRadius, distance-3), false);
+			 normalGoBackward(distance - 5);
 			 carStop();
+			 searchHelper = new float[size];
+			 helperCounter = 0;
 		 }
 		 
 	 }
@@ -661,37 +699,65 @@ public class Navigation {
 	 public void turnSearch() throws OdometerExceptions {
 		 this.search = true;
 		 if (usFetch() < 5) {
-			 leftMotor.rotate(convertDistance(leftRadius, 8), true);
-			 rightMotor.rotate(convertDistance(rightRadius, 8), false);
+			 normalGoForward(8);
 			 carStop();
-			 leftMotor.rotate(-convertDistance(leftRadius, 8), true);
-			 rightMotor.rotate(-convertDistance(rightRadius, 8), false);
+			 normalGoBackward(8);
 			 carStop();
 		 }
+		 double preTarget = -1;
 		 double angle = gyroFetch();
 		 double curAngle = gyroFetch();
 		 boolean start = false;
 		 double difAngle = 0;
-		 while(!start && difAngle < 350) {
-			 leftMotor.setSpeed(70);
-			  rightMotor.setSpeed(70);
+		 while(!start || difAngle < 340) {
+			 leftMotor.setSpeed(80);
+			  rightMotor.setSpeed(80);
 			  leftMotor.forward();
 			  rightMotor.backward();
 			  curAngle = gyroFetch();
-			  if (usFetch() < 45) {
-				  travelSearch(usFetch());
+			  helper();
+			  if (detected()) {				  
+				  carStop();
+				  if (preTarget == -1 || !compareAngle(preTarget,curAngle)){
+					 leftMotor.rotate(-convertAngle(leftRadius, track, 25), true);
+				     rightMotor.rotate(convertAngle(rightRadius, track, 25), false);
+				     if (usFetch()<45){
+				     travelSearch(usFetch());
+				     }
+				     leftMotor.rotate(convertAngle(leftRadius, track, 25), true);
+				     rightMotor.rotate(-convertAngle(rightRadius, track, 25 ), false);
+				     preTarget = curAngle;
+				  }
 			  }
 			  if (angle > 180 && curAngle < angle) {
 				  difAngle = 360 - (angle - curAngle);
-			  }else if (angle < 180 && curAngle > angle) {
+			  }else if (angle <= 180 && curAngle >= angle) {
 				  difAngle = curAngle -angle;
 			  }else if (angle <= 180 && curAngle < angle) {
 				  difAngle = 360 - (angle - curAngle);
 			  }
+			  else {
+				  difAngle = curAngle - angle;
+			  }
+			  System.out.println(difAngle+" degree");
 			  if (!start && difAngle > 20) {
 				  start = true;
 			  }
 		 }
+	 }
+	 private boolean compareAngle(double angle,double curAngle) {
+		 double difAngle = -1;
+		 if (angle > 180 && curAngle < angle) {
+			  difAngle = 360 - (angle - curAngle);
+		  }else if (angle <= 180 && curAngle >= angle) {
+			  difAngle = curAngle -angle;
+		  }else if (angle <= 180 && curAngle < angle) {
+			  difAngle = 360 - (angle - curAngle);
+		  }else {
+			  difAngle = curAngle - angle;
+		  }
+		 System.out.println(difAngle <= 40);
+		 return difAngle <= 40;
 	 }
 	 private void makeNoise(int num) {
 		 for(int i = 0;i< num;i++) {
@@ -710,11 +776,15 @@ public class Navigation {
 		 for (int i = 1;i<=dX;i++) {
 			 if (i % 2 == 1) {
 				 for (int j = (i-1)*dY + 1;j<=i*dY;j++) {
+					 //System.out.println(searchMap[0][j-1] + " " + searchMap[1][j-1]);
 					 travelTo(searchMap[0][j-1]*tileSize,searchMap[1][j-1]*tileSize);
+					 turnSearch();
 				 }
 			 }else {
-				 for (int j = i*dY;j<=(i-1)*dY+1;j--) {
+				 for (int j = i*dY;j>=(i-1)*dY+1;j--) {
+					// System.out.println(searchMap[0][j-1] + " " + searchMap[1][j-1]);
 					 travelTo(searchMap[0][j-1]*tileSize,searchMap[1][j-1]*tileSize);
+					 turnSearch();
 				 }
 			 }
 		 }
@@ -724,30 +794,154 @@ public class Navigation {
 	  * @throws OdometerExceptions
 	  */
 	 public void travelToSearchArea() throws OdometerExceptions {
-		 travelTo((szrLLx-0.4)*tileSize,(szrLLy-0.4)*tileSize);
-		 turnTo(90);
+		 travelTo((szrLLx)*tileSize,(szrLLy)*tileSize+6);
+		 turnTo(0);
 		 ll.localize(szrLLx, szrLLy);
 		 travelTo(szrLLx*tileSize,szrLLy*tileSize);
 		 makeNoise(5);
+	 }
+	 private void helper() {
+		 float value = usFetch();
+		 if (helperCounter > size - 1) {
+			for (int i = 0;i <= size - 2;i++) {
+				searchHelper[i]=searchHelper[i+1];
+			}
+			searchHelper[size - 1] = value;
+		 }else {
+			 searchHelper[helperCounter] = value;
+		 }
+		 helperCounter++;
+	 }
+	 private boolean detected() {
+		 return searchHelper[size/2]< searchHelper[size - 1] && searchHelper[size / 2]< searchHelper[0] && searchHelper[size/2] < 45;
 	 }
 	 /**
 	  * this function is the primary function in the navigation class,it calls other function to reach the destination
 	  * @throws OdometerExceptions
 	  */
 	 public void work() throws OdometerExceptions {
-		 travelTo((redLLx+1)*tileSize,(redLLy+1)*tileSize);
+	     travelTo((redLLx+1)*tileSize,(redLLy+1)*tileSize);
 		 turnTo(0);
-		 leftMotor.setSpeed(50);
-		 rightMotor.setSpeed(50);
-		 leftMotor.rotate(-convertAngle(leftRadius, track, 6), true);
-	     rightMotor.rotate(convertAngle(rightRadius, track, 6), false);
+		 Sound.beep();
+		 //leftMotor.setSpeed(50);
+		 //rightMotor.setSpeed(50);
+		 //leftMotor.rotate(convertAngle(leftRadius, track, 12), true);
+	     //rightMotor.rotate(-convertAngle(rightRadius, track, 12), false);
 	     System.out.println("here");
 		 gySensor.reset();
 		 travelTunnel();
-		 
+		// odometer.setXYT(7*tileSize, 6*tileSize, 0);
 		 travelToSearchArea();
+		 //odometer.setXYT(0, 0, 0);
 		 search();
 		 travelTo(szrURx*tileSize,szrURy*tileSize);
 		 makeNoise(5);
 	 }
+	 private void normalGoForward(double distance) {
+		 for (EV3LargeRegulatedMotor motor : new EV3LargeRegulatedMotor[] {leftMotor, rightMotor}) {
+		      motor.stop();
+		      motor.setAcceleration(3000);
+		    }
+
+		    // Sleep for 2 seconds
+		    try {
+		    	
+		      Thread.sleep(2000);
+		    } catch (InterruptedException e) {
+		      // There is nothing to be done here
+		    }
+		    leftMotor.rotate(convertDistance(leftRadius, distance), true);
+			rightMotor.rotate(convertDistance(rightRadius, distance), false);
+	 }
+	 private void normalGoBackward(double distance) {
+		 for (EV3LargeRegulatedMotor motor : new EV3LargeRegulatedMotor[] {leftMotor, rightMotor}) {
+		      motor.stop();
+		      motor.setAcceleration(3000);
+		    }
+
+		    // Sleep for 2 seconds
+		    try {
+		    	
+		      Thread.sleep(2000);
+		    } catch (InterruptedException e) {
+		      // There is nothing to be done here
+		    }
+		    leftMotor.rotate(-convertDistance(leftRadius, distance), true);
+			rightMotor.rotate(-convertDistance(rightRadius, distance), false);
+	 }
+	 private boolean weightMeasure() throws OdometerExceptions {
+		 boolean up = false,down = false,left = false,right = false;
+		 if (szrLLx-islLLx > 0) {
+			 left = true;
+		 }
+		 if (szrLLy - islLLy > 0) {
+			 down = true;
+		 }
+		 if (islURx - szrURx > 0) {
+			 right = true;
+		 }
+		 if (islURy - szrURy > 0) {
+			 down = true;
+		 }
+		 double curx = odometer.getXYT()[0];
+		 double cury = odometer.getXYT()[1];
+		 double llx = szrLLx*tileSize;
+		 double lly = szrLLy * tileSize;
+		 double urx = szrURx*tileSize;
+		 double ury = szrURy*tileSize;
+		 if (left) {
+			if ((cury - lly) <=(ury-cury)) {
+				travelTo((szrLLx-0.5)*tileSize,szrLLy*tileSize);
+				turnTo(0);
+			}else {
+				travelTo((szrLLx-0.5)*tileSize,szrURy*tileSize);
+				turnTo(180);
+			}
+		 }else if (down) {
+			if ((curx - llx)<=(urx - curx)) {
+				travelTo(szrLLx*tileSize,(szrLLy-0.5)*tileSize); 
+				turnTo(90);
+			}else {
+				travelTo(szrURx*tileSize,(szrLLy-0.5)*tileSize);
+				turnTo(270);
+			}
+		 }else if (up) {
+			if ((curx - llx)<=(urx - curx)) {
+				travelTo(szrLLx*tileSize,(szrURy+0.5)*tileSize); 
+				turnTo(90);
+			}else {
+				travelTo(szrURx*tileSize,(szrURy+0.5)*tileSize);
+				turnTo(270);
+			} 
+		 }else if (right) {
+			if ((cury - lly) <=(ury-cury)) {
+				travelTo((szrURx+0.5)*tileSize,szrLLy*tileSize);
+				turnTo(0);
+			}else {
+				travelTo((szrURx+0.5)*tileSize,szrURy*tileSize);
+				turnTo(180);
+			}
+		 }
+	 }
+	 private boolean timeMeasure() {
+		 while(ll.fetchSample() > COLOR_THRESHOLD_B) {
+			 leftMotor.forward();
+			 rightMotor.forward();
+		 }
+		 carStop();
+		 long startTime = System.nanoTime();
+		 boolean filter = false;
+		 while(ll.fetchSample() > COLOR_THRESHOLD_B || !filter) {
+			 leftMotor.forward();
+			 rightMotor.forward();
+			 if (!filter && ll.fetchSample() > COLOR_THRESHOLD_B) {
+				 filter = true;
+			 }
+		 }
+		 carStop();
+		 long endTime = System.nanoTime();
+		 long duration = endTime - startTime;
+		 return duration > 000; // need to find the 
+	 }
+	 
 }

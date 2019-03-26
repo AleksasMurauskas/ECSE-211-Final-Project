@@ -59,7 +59,7 @@ public class ColorClassification {
 	/**
 	 * the max time of detection we will perform if we get a unmatched color
 	 */
-	private static final int MAX_DETECTION_TIMES= 30;
+	private static final int MAX_DETECTION_TIMES= 22;
 	
 	/**
 	 * Constructor
@@ -90,7 +90,7 @@ public class ColorClassification {
 			//sideMotor.stop();
 			color = matchColor( fetch() );			
 			counter++;      		//the counter increased by one once we called the match color method
-			turnRight();			//turn right and get ready for another match color 
+			turnLeft();			//turn right and get ready for another match color 
 		} while (color == -1 && counter<MAX_DETECTION_TIMES);
 		
 		//turn the sensor back to its initial position
@@ -171,9 +171,9 @@ public class ColorClassification {
 	/**
 	 * This method make the sensor turn right for a fixed degree
 	 */
-	public static void turnRight(){
+	public static void turnLeft(){
 		sideMotor.setSpeed(ROTATION_SPEED);
-		sideMotor.rotate(-ROTATION_DEGREE);
+		sideMotor.rotate(ROTATION_DEGREE);
 		
 	}
 	
@@ -183,7 +183,7 @@ public class ColorClassification {
 	 */
 	public static void backToInitial(int counter){
 		sideMotor.setSpeed(ROTATION_SPEED*2);
-		sideMotor.rotate(counter * ROTATION_DEGREE,false);
+		sideMotor.rotate(-counter * ROTATION_DEGREE,false);
 	}
 	
 }

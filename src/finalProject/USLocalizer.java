@@ -11,9 +11,9 @@ public class USLocalizer {
 	/**
 	 * constants for our car and for the noise margin
 	 */
-	public static int ROTATION_SPEED = 180;
+	public static int ROTATION_SPEED = 220;
 	private static final double NOISE_MARGIN_D = 27.00;
-	private static final double NOISE_MARGIN_K = 5;
+	private static final double NOISE_MARGIN_K = 18;
 	private int SC;
 	
 	/**
@@ -61,6 +61,7 @@ public class USLocalizer {
 	 * 
 	 */
 	public void localize() {
+			Sound.beep();
 			localizeFallingEdge();
 	}
 
