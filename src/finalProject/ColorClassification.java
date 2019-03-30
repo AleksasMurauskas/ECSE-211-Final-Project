@@ -11,7 +11,7 @@ public class ColorClassification {
 	 * setup the motor for the sensor
 	 */
 	private static final EV3LargeRegulatedMotor sideMotor = 
-			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+			new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
 	
 	/**
 	 * Light sensor object
@@ -38,7 +38,7 @@ public class ColorClassification {
 	/**
 	 * 2D Float Array store the information in one list for iteration
 	 */
-	private static final float[][] COLOR_LIST= {RED,GREEN,BLUE,YELLOW};
+	private static final float[][] COLOR_LIST= {BLUE,GREEN,YELLOW,RED};
 	
 	/**
 	 *  tolerance interval for classifying a color
@@ -59,11 +59,11 @@ public class ColorClassification {
 	/**
 	 * the max time of detection we will perform if we get a unmatched color
 	 */
-	private static final int MAX_DETECTION_TIMES= 30;
+	private static final int MAX_DETECTION_TIMES= 22;
 	
 	/**
 	 * Constructor
-	 * @param colorSensor
+	 * @param colorSensor the color sensor connect to the car
 	 */
 	public ColorClassification(EV3ColorSensor colorSensor) {
 		this.colorSensor = colorSensor;
@@ -90,7 +90,7 @@ public class ColorClassification {
 			//sideMotor.stop();
 			color = matchColor( fetch() );			
 			counter++;      		//the counter increased by one once we called the match color method
-			turnRight();			//turn right and get ready for another match color 
+			turnLeft();			//turn right and get ready for another match color 
 		} while (color == -1 && counter<MAX_DETECTION_TIMES);
 		
 		//turn the sensor back to its initial position
@@ -114,8 +114,8 @@ public class ColorClassification {
 	
 	/**
 	 * This method allows to match the readings and determine the color detected
+	 * @param array the detected rgb value
 	 * @return (integer representing color) 0-red 1-green 2-blue 3-yellow
-	 * 
 	 */
 	public static int matchColor(float array[]) {
 		
@@ -154,8 +154,8 @@ public class ColorClassification {
 	
 /**
  * This method allow us to find whether one array is within interval of another
- * @param array1 
- * @param array2 
+ * @param array1  the detected rgb value
+ * @param array2  the standard rgb value of certain can
  * @param tolerace which means the max difference the value in the two arrays can have 
  * @return boolean whether the value in the two arrays are close enough
  */
@@ -171,9 +171,9 @@ public class ColorClassification {
 	/**
 	 * This method make the sensor turn right for a fixed degree
 	 */
-	public static void turnRight(){
+	public static void turnLeft(){
 		sideMotor.setSpeed(ROTATION_SPEED);
-		sideMotor.rotate(-ROTATION_DEGREE);
+		sideMotor.rotate(ROTATION_DEGREE);
 		
 	}
 	
@@ -183,7 +183,7 @@ public class ColorClassification {
 	 */
 	public static void backToInitial(int counter){
 		sideMotor.setSpeed(ROTATION_SPEED*2);
-		sideMotor.rotate(counter * ROTATION_DEGREE,false);
+		sideMotor.rotate(-counter * ROTATION_DEGREE,false);
 	}
 	
 }
