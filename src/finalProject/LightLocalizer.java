@@ -266,8 +266,8 @@ public class LightLocalizer {
 	    }
 	    carStop();
 	    //sees line, back up by 15 cms
-	    leftMotor.rotate(convertDistance(Final.WHEEL_RAD, distanceLS + 2), true);
-	    rightMotor.rotate(convertDistance(Final.WHEEL_RAD, distanceLS + 2), false);
+	    leftMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 2), true);
+	    rightMotor.rotate(-convertDistance(Final.WHEEL_RAD, distanceLS + 2), false);
 			  
 	    carSetSpeed(ROTATION_SPEED);
 	    //turns 90 degrees to the right

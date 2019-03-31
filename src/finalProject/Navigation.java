@@ -619,7 +619,7 @@ public class Navigation {
 	private boolean farAway(int x,int y) {
 		int curx = (int)odometer.getXYT()[0];
 		int cury = (int)odometer.getXYT()[2];
-		return Math.abs(x*30 -curx) + Math.abs(y*30 - cury) > 200;
+		return Math.abs(x*30 -curx) + Math.abs(y*30 - cury) > 300;
 	}
 	private int getCorner() {
 		if (this.SC == 0) {
