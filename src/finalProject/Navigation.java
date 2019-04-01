@@ -664,7 +664,7 @@ public class Navigation {
 	public void travelTunnel() throws OdometerExceptions {
 		int corner = getCorner();
 		double angle = (0 + 360 -corner*90)%360;
-		if ((tunLLx + 1 <= redURx)||(tunURy-tunLLy == 2)) {
+		if (((tunLLx + 1 <= redURx) && (tunLLy + 1 >= redURy))||(tunURy-tunLLy == 2)) {
 			if(this.SC == 0) {
 				if(this.SC == corner) {
 					boolean far = farAway(tunLLx,tunLLy);
